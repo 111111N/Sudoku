@@ -24,33 +24,22 @@
           <div class="label">Time</div>
           <div id="best-score" class="value">00:00</div>
         </div>
-        <div id="level-card" class="stat">
-          <div class="label">Difficulty</div>
-          <div id="level" class="value">Medium</div>
-        </div>
-      </div>
+              </div>
 
       <div class="right">
         <button id="newgame" class="btn icon" title="Новая игра">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-            <defs>
-              <linearGradient id="restartGrad" x1="0" x2="1">
-                <stop offset="0%" stop-color="#FDF500"/>
-                <stop offset="50%" stop-color="#FDF500"/>
-                <stop offset="100%" stop-color="#FDF500"/>
-              </linearGradient>
-            </defs>
             <path d="M21 12a9 9 0 10-2.1 5.6" 
-                  stroke="url(#restartGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
             <path d="M22.5 4v8h-7" 
-                  stroke="url(#restartGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
           </svg>
         </button>
 
         <button id="sound-toggle" class="btn icon" title="Звук вкл/выкл" aria-pressed="true">
           <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-          <path d="M5 9v6h4l5 5V4l-5 5H5z" stroke="#E455AE" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
-          <path d="M17 9 A3 3 0 0 1 17 15" stroke="#E455AE" stroke-width="2" stroke-linecap="round" fill="none"/>
+          <path d="M5 9v6h4l5 5V4l-5 5H5z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M17 9 A3 3 0 0 1 17 15" stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none"/>
           </svg>
         </button>
       </div>
@@ -63,26 +52,46 @@
           </div>
 
         <div id="keyboard-wrap">
-          <div id="virtual-keyboard">
-            <button class="key-btn" data-key="1">1</button>
-            <button class="key-btn" data-key="2">2</button>
-            <button class="key-btn" data-key="3">3</button>
-            <button class="key-btn" data-key="4">4</button>
-            <button class="key-btn" data-key="5">5</button>
-            <button class="key-btn" data-key="6">6</button>
-            <button class="key-btn" data-key="7">7</button>
-            <button class="key-btn" data-key="8">8</button>
-            <button class="key-btn" data-key="9">9</button>
-            <button id="key-delete" class="key-btn special-key" data-key="Delete">
-              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"></path><line x1="10" y1="12" x2="18" y2="12"></line></svg>
-            </button>
-          </div>
-        </div>
+  <div id="virtual-keyboard">
+    <button id="key-undo" class="key-btn special-key" data-key="Undo" title="Отменить" style="grid-column: span 2;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M7 15l-3-3 3-3"/>
+        <path d="M8 12h7a4 4 0 014 2v2"/>
+      </svg>
+    </button>
+    <button class="key-btn" data-key="1">1</button>
+    <button class="key-btn" data-key="2">2</button>
+    <button class="key-btn" data-key="3">3</button>
+    <button class="key-btn" data-key="4">4</button>
+    <button class="key-btn" data-key="5">5</button>
+    <button id="key-erase" class="key-btn special-key" data-key="Delete" title="Стереть" style="grid-column: span 2;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 4H8l-7 8 7 8h13a2 2 0 002-2V6a2 2 0 00-2-2z"></path><line x1="10" y1="12" x2="18" y2="12"></line></svg>
+    </button>
+    
+    <button id="notes-toggle" class="key-btn special-key" data-key="Notes" title="Режим заметок" style="grid-column: span 2;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M17 3a2.828 2.828 0 114 4L7.5 20.5 2 22l1.5-5.5L17 3z"/>
+      </svg>
+    </button>
+    <button class="key-btn" data-key="6">6</button>
+    <button class="key-btn" data-key="7">7</button>
+    <button class="key-btn" data-key="8">8</button>
+    <button class="key-btn" data-key="9">9</button>
+    <button class="key-btn" data-key="0" style="visibility: hidden;"></button> 
+    <button id="hint-btn" class="key-btn special-key" data-key="Hint" title="Подсказка" style="grid-column: span 2;">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+<path d="M12 21C16.9706 21 21 16.9706 21 12C21 7.02944 16.9706 3 12 3C7.02944 3 3 7.02944 3 12C3 16.9706 7.02944 21 12 21Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+<path d="M12 17V17C12.5523 17 13 17.4477 13 18V18C13 18.5523 12.5523 19 12 19V19C11.4477 19 11 18.5523 11 18V18C11 17.4477 11.4477 17 12 17V17ZM12 5C14.7614 5 17 7.23858 17 10C17 12.2154 15.658 13.916 13.5 14.5V14.5V14.5C13.5 14.7761 13.2761 15 13 15H11C10.7239 15 10.5 14.7761 10.5 14.5V14.5C8.34204 13.916 7 12.2154 7 10C7 7.23858 9.23858 5 12 5Z" stroke="currentColor" stroke-width="2"/>
+</svg>
+      <span id="hint-counter" class="key-counter">3</span>
+    </button>
+  </div>
+</div>
 
         <div id="start-overlay">
             <div id="start-card">
                 <h2 id="start-title">SUDOKU — CyberPunk</h2>
-                <p id="start-score" style="margin-top: 10px; font-size: 20px; font-weight: bold; color: var(--color-gold);"></p>
+                <p id="start-score"></p>
                 <p id="start-message"></p>
             </div>
         </div>

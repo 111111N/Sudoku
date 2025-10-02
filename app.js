@@ -5,18 +5,23 @@
 const SIZE = 9; 
 const game = document.getElementById("game");
 const gridEl = document.getElementById("sudoku-grid"); 
+const gameWrapEl = document.getElementById("game-wrap"); 
+const keyboardWrapEl = document.getElementById("keyboard-wrap"); 
+const containerEl = document.getElementById("container"); 
 
 const scoreEl = document.getElementById("score"); 
 const bestEl = document.getElementById("best-score"); 
-const levelEl = document.getElementById("level"); 
 const newGameBtn = document.getElementById("newgame");
 const soundToggle = document.getElementById("sound-toggle");
 const virtualKeyboard = document.getElementById("virtual-keyboard"); 
 
+const hintBtn = document.getElementById("hint-btn"); 
+const hintCounterEl = document.getElementById("hint-counter"); 
+const notesToggleBtn = document.getElementById("notes-toggle"); 
+
 // Overlay
 let startOverlay = document.getElementById('start-overlay'); 
 
-// Check if overlay exists, if not, create it (for robustness)
 if (!startOverlay) {
     startOverlay = document.createElement('div');
     startOverlay.id = 'start-overlay';
@@ -38,18 +43,76 @@ const startScore = startOverlay.querySelector('#start-score');
 let currentBoard = []; 
 let solutionBoard = []; 
 let errors = 0;
-let difficulty = 'Medium';
+let difficulty = 'Medium'; 
 let gameStartTime = 0;
 let timerInterval = null;
-let selectedCell = null; // Хранит элемент div.sudoku-cell
+let selectedCell = null; 
 let soundOn = (localStorage.getItem("snake_sound") || "1") === "1"; 
+
+let hintsRemaining = 3; 
+let isNotesMode = false; 
+let notesBoard = []; 
+
+// History state (Undo)
+let history = []; 
+const MAX_HISTORY = 50; 
+
+
+// =========================================================
+// === Undo History Management ===
+// =========================================================
+
+function saveState() {
+    // Сохраняем глубокую копию текущего состояния до изменения
+    const currentBoardCopy = currentBoard.map(row => [...row]);
+    // Сохраняем глубокую копию заметок (Set'ы)
+    const notesBoardCopy = notesBoard.map(row => row.map(set => new Set(set)));
+
+    history.push({ 
+        board: currentBoardCopy, 
+        notes: notesBoardCopy 
+    });
+
+    // Ограничиваем историю
+    if (history.length > MAX_HISTORY) {
+        history.shift(); 
+    }
+}
+
+function undo() {
+    if (history.length <= 1) { 
+        return;
+    }
+    
+    // Удаляем последнее (текущее) состояние, которое было сохранено перед последним изменением
+    history.pop(); 
+    
+    // Берем предыдущее состояние
+    const previousState = history[history.length - 1]; 
+    
+    // Восстанавливаем доски
+    currentBoard = previousState.board.map(row => [...row]);
+    notesBoard = previousState.notes.map(row => row.map(set => new Set(set)));
+    
+    // Перерисовываем и обновляем состояние
+    renderBoard();
+    updateErrors();
+    
+    // Сбрасываем выделение
+    selectedCell = null;
+    clearHighlights();
+    clearValueHighlights();
+}
 
 // =========================================================
 // === Sudoku Logic (Generator/Solver) ===
 // =========================================================
-
 function createEmptyBoard() {
     return Array(SIZE).fill(0).map(() => Array(SIZE).fill(0));
+}
+
+function createEmptyNotesBoard() {
+    return Array(SIZE).fill(0).map(() => Array(SIZE).fill(0).map(() => new Set()));
 }
 
 function solve(board) {
@@ -131,6 +194,7 @@ function generatePuzzle(solvedBoard, level) {
     return puzzle;
 }
 
+
 // =========================================================
 // === Rendering ===
 // =========================================================
@@ -139,18 +203,33 @@ function renderBoard() {
     gridEl.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
     gridEl.style.gridTemplateRows = `repeat(${SIZE}, 1fr)`;
 
+    // Используем rgba для границ блоков
+    const blockBorderColor = "rgba(0, 251, 255, 0.67)"; 
+    
     for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
             const cell = document.createElement("div");
             cell.className = "sudoku-cell";
             cell.dataset.row = r + 1; 
             cell.dataset.col = c + 1;
+            
+            // === ЛОГИКА ГРАНИЦ 3x3 ===
+            const isColBoundary = (c + 1) % 3 === 0 && c + 1 !== 9; 
+            const isRowBoundary = (r + 1) % 3 === 0 && r + 1 !== 9; 
+            if (isColBoundary) { cell.style.borderRight = `2px solid ${blockBorderColor}`; }
+            if (isRowBoundary) { cell.style.borderBottom = `2px solid ${blockBorderColor}`; }
+            // ===============================================
 
             const value = currentBoard[r][c];
             
             if (value !== 0) {
                 cell.textContent = value;
                 cell.classList.add('fixed-value');
+                // Добавление обработчика клика для фиксированных ячеек
+                cell.addEventListener('click', () => { 
+                    handleFocus({ target: cell }); 
+                }); 
+
             } else {
                 const input = document.createElement("input");
                 input.type = 'text';
@@ -162,9 +241,25 @@ function renderBoard() {
                 input.classList.add('input-value');
                 cell.appendChild(input);
 
+                // Notes container
+                const notesContainer = document.createElement("div");
+                notesContainer.className = "notes";
+                notesContainer.dataset.r = r;
+                notesContainer.dataset.c = c;
+                for (let i = 1; i <= 9; i++) {
+                    const noteSpan = document.createElement("span");
+                    noteSpan.dataset.note = i;
+                    notesContainer.appendChild(noteSpan);
+                }
+                cell.appendChild(notesContainer);
+                
+                updateNotesDisplay(r, c, notesContainer);
+                
                 input.addEventListener('input', handleInput);
                 input.addEventListener('focus', handleFocus);
                 input.addEventListener('blur', handleBlur);
+                
+                // Для ячейки с input клик на div фокусирует input.
                 cell.addEventListener('click', () => { 
                     input.focus();
                 }); 
@@ -173,28 +268,88 @@ function renderBoard() {
             gridEl.appendChild(cell);
         }
     }
-    // *** ИСПРАВЛЕНИЕ #1: Удаляем синхронный вызов recalcLayout(), 
-    // чтобы избежать пересчета макета до стабилизации DOM. ***
-    // recalcLayout(); 
+    recalcLayout(); 
 }
+
+function updateNotesDisplay(r, c, notesContainer) {
+    const notes = notesBoard[r][c];
+    if (!notesContainer) {
+        notesContainer = gridEl.querySelector(`.sudoku-cell .notes[data-r="${r}"][data-c="${c}"]`);
+        if (!notesContainer) return;
+    }
+    
+    notesContainer.querySelectorAll('span').forEach(span => {
+        const noteValue = parseInt(span.dataset.note);
+        if (notes.has(noteValue)) {
+            span.textContent = noteValue;
+        } else {
+            span.textContent = '';
+        }
+    });
+}
+
 
 function recalcLayout() {
-    const firstCell = gridEl.querySelector('.sudoku-cell');
-    if (firstCell) {
-        // *** ИСПРАВЛЕНИЕ #3: Используем offsetWidth, так как ширина чаще более стабильна
-        // для квадратных ячеек в адаптивном дизайне. ***
-        const cellSize = firstCell.offsetWidth; 
-        const fontSize = Math.floor(cellSize * 0.45); 
-        document.querySelectorAll('.sudoku-cell').forEach(cell => {
-            cell.style.fontSize = `${fontSize}px`;
-            const input = cell.querySelector('input');
-            if(input) {
-                input.style.fontSize = `${fontSize}px`;
-            }
-        });
-    }
+    const hudEl = document.getElementById("hud");
+    const containerPadding = 18 * 2; 
+    const hudHeight = hudEl ? hudEl.offsetHeight : 0; 
+    const hudMarginBottom = 14; 
+    
+    const reservedVerticalSpace = hudHeight + hudMarginBottom + containerPadding; 
+    
+    const availableGameWrapHeight = window.innerHeight - reservedVerticalSpace;
+
+    const keyboardHeight = keyboardWrapEl ? keyboardWrapEl.offsetHeight : 0; 
+    
+    const maxGameWidth = gameWrapEl ? gameWrapEl.clientWidth : 0; 
+
+    const gridVerticalPadding = 14 * 2; 
+    const availableGridHeight = availableGameWrapHeight - keyboardHeight - gridVerticalPadding; 
+    
+    const targetGridSize = Math.min(maxGameWidth, availableGridHeight);
+
+    gridEl.style.width = `${targetGridSize}px`;
+    gridEl.style.height = `${targetGridSize}px`;
+    
+    const cellSize = targetGridSize / SIZE; 
+    const fontSize = Math.floor(cellSize * 0.55); 
+    
+    document.querySelectorAll('.sudoku-cell').forEach(cell => {
+        cell.style.fontSize = `${fontSize}px`;
+        const input = cell.querySelector('input');
+        if(input) {
+            input.style.fontSize = `${fontSize}px`;
+        }
+    });
 }
 
+
+// =========================================================
+// === Highlighting Logic ===
+// =========================================================
+
+function clearValueHighlights() {
+    gridEl.querySelectorAll('.highlight-value').forEach(el => {
+        el.classList.remove('highlight-value');
+    });
+}
+
+function highlightSameValues(value) {
+    clearValueHighlights();
+    const num = parseInt(value);
+    if (isNaN(num) || num === 0) return;
+
+    // Используем data-row/data-col для правильного сопоставления с currentBoard
+    gridEl.querySelectorAll('.sudoku-cell').forEach((cell) => {
+        const r = parseInt(cell.dataset.row) - 1; // 0-based index
+        const c = parseInt(cell.dataset.col) - 1; // 0-based index
+        
+        // Проверяем текущее значение доски
+        if (currentBoard[r][c] === num) {
+            cell.classList.add('highlight-value');
+        }
+    });
+}
 
 // =========================================================
 // === Input Handling & Validation ===
@@ -203,19 +358,76 @@ function recalcLayout() {
 function applyKeyValueToSelectedCell(key) {
     if (!selectedCell) return;
     
-    const input = selectedCell.querySelector('input');
-    if (!input) return;
-
-    if (key === 'Delete' || key === 'Backspace') {
-        input.value = ''; 
-    } else if (/[1-9]/.test(key) && key.length === 1) {
-        input.value = key; 
-    } else {
+    const isFixed = selectedCell.classList.contains('fixed-value');
+    if (isFixed) {
+        // Защита: нельзя менять фиксированные ячейки
         return; 
     }
+    
+    // Сохраняем состояние ПЕРЕД изменением доски
+    saveState(); 
 
-    handleInput({ target: input });
-    input.focus(); 
+    const input = selectedCell.querySelector('input');
+    // Ячейки, которые не являются fixed, всегда имеют input, но проверка на всякий случай
+    if (!input) {
+        history.pop(); 
+        return;
+    }
+
+    const r = parseInt(input.dataset.r);
+    const c = parseInt(input.dataset.c);
+    
+    if (isNotesMode) {
+        // --- РЕЖИМ ЗАМЕТОК ---
+        if (/[1-9]/.test(key) && key.length === 1) {
+            const num = parseInt(key);
+            const notes = notesBoard[r][c];
+
+            if (currentBoard[r][c] !== 0) {
+                // Если ячейка заполнена, очищаем значение перед добавлением заметки
+                input.value = '';
+                currentBoard[r][c] = 0;
+            }
+            
+            // Переключаем заметку
+            if (notes.has(num)) {
+                notes.delete(num);
+            } else {
+                notes.add(num);
+            }
+            updateNotesDisplay(r, c);
+            
+        } else if (key === 'Delete' || key === 'Backspace' || key === '0') { 
+            // Кнопка "Стереть" / "Delete" в режиме заметок стирает все заметки
+            notesBoard[r][c].clear();
+            updateNotesDisplay(r, c);
+        } else {
+            history.pop(); 
+            return;
+        }
+        
+    } else {
+        // --- РЕЖИМ ВВОДА ЗНАЧЕНИЯ ---
+        if (key === 'Delete' || key === 'Backspace' || key === '0') { 
+            input.value = ''; 
+        } else if (/[1-9]/.test(key) && key.length === 1) {
+            input.value = key; 
+            // При вводе значения очищаем все заметки
+            notesBoard[r][c].clear();
+            updateNotesDisplay(r, c);
+        } else {
+            history.pop(); 
+            return;
+        }
+
+        handleInput({ target: input });
+        
+        const val = input.value;
+        const num = val === '' ? 0 : parseInt(val);
+        highlightSameValues(num); 
+    }
+    
+    // input.focus() вызывается неявно через клик или явно через keydown
 }
 
 function handleInput(event) {
@@ -229,23 +441,49 @@ function handleInput(event) {
     const num = val === '' ? 0 : parseInt(val);
     currentBoard[r][c] = num;
     
+    if (num !== 0) {
+        notesBoard[r][c].clear();
+        updateNotesDisplay(r, c);
+    }
+    
     updateErrors();
 
     if (val.length === 1) {
         checkWinCondition();
     }
+    
+    highlightSameValues(num); 
 }
 
 function handleFocus(event) {
+    // Находим ближайший div.sudoku-cell
     const cell = event.target.closest('.sudoku-cell');
     if (!cell) return;
     
     selectedCell = cell; 
     highlightRelatedCells(cell);
+    
+    const input = cell.querySelector('input');
+    let valueToHighlight = 0;
+    
+    // Ключевая логика для подсветки
+    if (cell.classList.contains('fixed-value')) {
+        // Если это фиксированная ячейка, берем значение из текста
+        valueToHighlight = parseInt(cell.textContent);
+    } else if (input) {
+        // Если это ячейка ввода, берем значение из input
+        valueToHighlight = parseInt(input.value || '0');
+    }
+    
+    if (valueToHighlight !== 0) {
+        highlightSameValues(valueToHighlight);
+    }
 }
 
 function handleBlur(event) {
     clearHighlights();
+    clearValueHighlights(); 
+    // selectedCell = null; 
 }
 
 function highlightRelatedCells(cell) {
@@ -288,6 +526,7 @@ function clearHighlights() {
 // =========================================================
 // === Game State Management ===
 // =========================================================
+
 function updateErrors() {
     let currentErrors = 0;
     
@@ -297,6 +536,7 @@ function updateErrors() {
         for (let c = 0; c < SIZE; c++) {
             const val = currentBoard[r][c];
             if (val !== 0) {
+                // Если значение не 0 и не совпадает с решением, это ошибка 
                 if (val !== solutionBoard[r][c]) {
                     currentErrors++;
                     const cellEl = gridEl.querySelector(`[data-row="${r+1}"][data-col="${c+1}"]`);
@@ -307,7 +547,7 @@ function updateErrors() {
     }
     
     errors = currentErrors;
-    scoreEl.textContent = errors;
+    scoreEl.textContent = errors; 
 }
 
 function checkWinCondition() {
@@ -323,7 +563,6 @@ function checkWinCondition() {
 
 function updateHUD(timeElapsed = 0) {
     scoreEl.textContent = errors;
-    levelEl.textContent = difficulty;
     
     const timeFormatted = formatTime(timeElapsed);
     bestEl.textContent = timeFormatted; 
@@ -353,12 +592,21 @@ function initGame() {
     // 2. Reset state
     errors = 0;
     selectedCell = null; 
+    hintsRemaining = 3; 
+    isNotesMode = false; 
+    notesBoard = createEmptyNotesBoard(); 
+    history = []; 
     
-    // 3. Render (вставляет элементы, но не устанавливает размер шрифта)
+    // 3. Render
     renderBoard();
+    
+    // Сохраняем начальное состояние сразу после рендеринга
+    saveState();
     
     // 4. Update HUD and start timer
     updateHUD(0);
+    updateHintsUI(); 
+    updateNotesUI();
     
     // 5. Hide overlay
     hideStartOverlay();
@@ -367,10 +615,9 @@ function initGame() {
 function startGame() {
     initGame();
     runTimer();
-    // *** ИСПРАВЛЕНИЕ #2: Вызываем recalcLayout сразу после запуска игры 
-    // и скрытия оверлея, чтобы обеспечить стабильность макета. ***
     recalcLayout(); 
 }
+
 function gameOver(win) {
     if (timerInterval) clearInterval(timerInterval);
     
@@ -388,7 +635,7 @@ function gameOver(win) {
 }
 
 function showStartOverlay(isGameOver = false, win = false, finalTime = 0, isNewBest = false) {
-    startOverlay.classList.add('visible');
+    startOverlay.classList.add('visible'); 
     game.style.pointerEvents = "none";
     
     if (isGameOver) {
@@ -417,10 +664,145 @@ function showStartOverlay(isGameOver = false, win = false, finalTime = 0, isNewB
 }
 
 function hideStartOverlay() {
-    startOverlay.classList.remove('visible');
+    startOverlay.classList.remove('visible'); 
     game.style.pointerEvents = "";
 }
 
+
+// =========================================================
+// === Hint Logic ===
+// =========================================================
+
+function updateHintsUI() {
+    if (hintCounterEl) {
+        hintCounterEl.textContent = hintsRemaining;
+    }
+    if (hintBtn) {
+        if (hintsRemaining <= 0) {
+            hintBtn.disabled = true;
+            hintBtn.style.opacity = '0.5';
+        } else {
+            hintBtn.disabled = false;
+            hintBtn.style.opacity = '1';
+        }
+    }
+}
+
+/**
+ * Открывает правильную цифру в выбранной ячейке (приоритет) или в первой пустой ячейке.
+ */
+function handleHint() {
+    if (hintsRemaining <= 0 || !gridEl) return;
+    
+    saveState(); 
+
+    let targetCell = null;
+    let targetR, targetC;
+    
+    // Приоритет 1: Выбранная **пустая** ячейка
+    if (selectedCell) {
+        const inputEl = selectedCell.querySelector('input');
+        if (inputEl) { // Проверяем, что это не фиксированная ячейка
+            const r = parseInt(inputEl.dataset.r);
+            const c = parseInt(inputEl.dataset.c);
+            
+            if (currentBoard[r][c] === 0) {
+                targetR = r;
+                targetC = c;
+                targetCell = selectedCell;
+            }
+        }
+    }
+    
+    // Приоритет 2: Первая пустая ячейка
+    if (!targetCell) {
+        for (let r = 0; r < SIZE; r++) {
+            for (let c = 0; c < SIZE; c++) {
+                if (currentBoard[r][c] === 0) {
+                    targetR = r;
+                    targetC = c;
+                    targetCell = gridEl.querySelector(`[data-row="${r+1}"][data-col="${c+1}"]`);
+                    break;
+                }
+            }
+            if (targetCell) break;
+        }
+    }
+    
+    if (targetCell) {
+        // 2. Применяем правильное значение
+        const solutionValue = solutionBoard[targetR][targetC];
+        
+        // Удаляем input и notes, если они есть
+        const inputEl = targetCell.querySelector('input');
+        const notesEl = targetCell.querySelector('.notes');
+        if (notesEl) notesEl.remove();
+        if (inputEl) inputEl.remove();
+        
+        // Добавляем статичное значение
+        targetCell.textContent = solutionValue;
+        currentBoard[targetR][targetC] = solutionValue; 
+        
+        // Делаем ячейку фиксированной (пользователь не сможет ее изменить)
+        targetCell.classList.add('fixed-value');
+        targetCell.classList.remove('error'); 
+        
+        // Очищаем заметки 
+        notesBoard[targetR][targetC].clear(); 
+
+        // Декремент подсказок и обновляем UI
+        hintsRemaining--;
+        updateHintsUI();
+        
+        // Проверяем состояние игры
+        updateErrors();
+        checkWinCondition();
+        
+        // Сбрасываем все выделения, чтобы не оставлять старый фокус
+        clearHighlights();
+        clearValueHighlights();
+        
+        // Эмулируем фокус на новой фиксированной ячейке для подсветки одинаковых значений
+        handleFocus({ target: targetCell }); 
+
+    } else {
+        // Если не удалось применить подсказку (вся доска заполнена), удаляем несостоявшееся сохранение
+        history.pop();
+    }
+}
+
+// =========================================================
+// === Notes Logic ===
+// =========================================================
+
+function updateNotesUI() {
+    if (notesToggleBtn) {
+        if (isNotesMode) {
+            notesToggleBtn.classList.add('active');
+            notesToggleBtn.title = "Режим заметок (ВКЛ)";
+        } else {
+            notesToggleBtn.classList.remove('active');
+            notesToggleBtn.title = "Режим заметок (ВЫКЛ)";
+        }
+    }
+}
+
+function handleNotesToggle() {
+    isNotesMode = !isNotesMode;
+    updateNotesUI();
+    
+    // Фокусируем на выбранной ячейке, чтобы обновить ее состояние
+    if (selectedCell) {
+        const input = selectedCell.querySelector('input');
+        if (input) {
+             // Снова вызываем фокус для input, чтобы обновить выделение
+            input.focus(); 
+        } else {
+            // Если это фиксированная ячейка, просто обновляем выделение
+            handleFocus({ target: selectedCell });
+        }
+    }
+}
 
 // =========================================================
 // === Controls & Event Listeners ===
@@ -442,9 +824,25 @@ document.addEventListener("keydown", (e) => {
         }
     }
     
-    if (selectedCell && (/[1-9]/.test(e.key) || e.key === 'Backspace' || e.key === 'Delete')) {
+    // Toggle Notes Mode
+    if (e.key === 'n' || e.key === 'N') {
         e.preventDefault();
-        applyKeyValueToSelectedCell(e.key);
+        handleNotesToggle();
+        return;
+    }
+
+    // Undo (Ctrl+Z or Cmd+Z)
+    if ((e.key === 'z' || e.key === 'Z') && (e.ctrlKey || e.metaKey)) {
+        e.preventDefault();
+        undo();
+        return;
+    }
+    
+    // Handle number/delete input
+    if (selectedCell && (/[0-9]/.test(e.key) || e.key === 'Backspace' || e.key === 'Delete')) {
+        e.preventDefault();
+        const key = e.key === '0' ? 'Delete' : e.key; 
+        applyKeyValueToSelectedCell(key);
     }
 });
 
@@ -458,7 +856,16 @@ if (virtualKeyboardEl) {
         e.preventDefault(); 
         
         const key = button.dataset.key; 
-        applyKeyValueToSelectedCell(key);
+        
+        if (key === 'Notes') {
+            handleNotesToggle();
+        } else if (key === 'Hint') {
+            handleHint();
+        } else if (key === 'Undo') { 
+            undo();
+        } else {
+            applyKeyValueToSelectedCell(key);
+        }
     });
 }
 
@@ -506,15 +913,13 @@ window.addEventListener("resize", () => setTimeout(recalcLayout, 50));
 window.addEventListener('load', () => {
     document.getElementById("score-card").querySelector('.label').textContent = "Errors";
     document.getElementById("best-card").querySelector('.label').textContent = "Time";
-    document.getElementById("level-card").querySelector('.label').textContent = "Difficulty";
     
     const bestTime = localStorage.getItem("sudoku_best_time") || "00:00";
     bestEl.textContent = bestTime;
 
-    // Вызываем recalcLayout сразу, чтобы установить размер шрифта для первого запуска (если сетка пустая)
-    // А если сетка пустая, то он ничего не сделает, но это нормально.
-    // Основной вызов произойдет при renderBoard с задержкой 50мс.
     recalcLayout(); 
     showStartOverlay(); 
     updateSoundIcon();
+    updateHintsUI();
+    updateNotesUI();
 });

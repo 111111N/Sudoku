@@ -1,438 +1,493 @@
 :root {
-  --max-game-w: 560px;
-  
-  /* Цветовая палитра */
-  --color-gold: #ffeb3b;
-  --color-magenta: #ff00ff;
-  --color-cyan: #00ffff;
-  --color-text-light: #e0e0e0;
+   --max-game-w: 560px;
+   
+   /* Цветовая палитра */
+   --color-gold: #ffeb3b; 
+   --color-magenta: #ff00ff; 
+   --color-cyan: #00ffff; 
+   --color-green: #e5ff72;
+   --color-orange: #ffcc00;
+   --color-text-light: #e0e0e0;
+   --color-dark-text: #050608; 
 
-  /* Цвет для свечения хвоста */
-  --color-tail-glow: var(--color-cyan);
+   /* Цвет для подсветки одинаковых значений */
+   --color-same-value: #9933ff; 
+   --color-same-value-bg: rgba(153, 51, 255, 0.2); 
 
-  /* Фоновые цвета */
-  --color-background-dark: #0b0b0e;
-  --color-background-light: #111216;
-  --color-background-panel: #15161a;
+   /* Фоновые цвета */
+   --color-background-dark: #0c0b0e;
+   --color-background-light: #111216;
+   --color-background-panel: #17151a;
+   
+   /* Прозрачные элементы */
+   --translucent-glass: rgba(255,255,255,0.03);
 
-  /* Неоновые эффекты */
-  --neon-glow-magenta: 0 0 10px var(--color-magenta), 0 0 15px var(--color-magenta), 0 0 50px var(--color-magenta);
-  
-  /* Внешнее свечение */
-  --neon-glow-gold: 0 0 10px var(--color-gold), 0 0 15px var(--color-gold), 0 0 50px var(--color-gold);
-  --neon-glow-magenta: 0 0 10px var(--color-magenta), 0 0 15px var(--color-magenta), 0 0 50px var(--color-magenta);
+   /* Неоновые эффекты */
+   --neon-glow-magenta: 0 0 10px var(--color-magenta), 0 0 15px var(--color-magenta), 0 0 50px var(--color-magenta);
+   --neon-glow-gold: 0 0 2px var(--color-gold), 0 0 3px var(--color-gold), 0 0 3px var(--color-gold);
+   --neon-glow-cyan: 0 0 2px var(--color-cyan), 0 0 50px rgba(0, 255, 255, 0.7);
+   --neon-glow-green: 0 0 2px var(--color-green), 0 0 3px var(--color-green);
+   --neon-glow-orange: 0 0 2px var(--color-orange), 0 0 3px var(--color-orange), 0 0 50px var(--color-orange);
+   /* Тени для кнопок */
+   --shadow-btn-gold: 0 8px 30px rgba(255, 247, 64, 0.04);
+   --shadow-btn-magenta: 0 8px 30px rgba(255, 0, 255, 0.04);
 
-  /* Шрифты и отступы */
-  --font-main: "Orbitron", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-  --hud-gap: 12px;
-  --grid-gap: 14px;
+   /* Шрифты и отступы */
+   --font-main: "Orbitron", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+   --hud-gap: 12px;
 }
 
 /* ================== Базовые стили ================== */
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body {
-  height: 100%;
-  margin: 0;
-  background: linear-gradient(180deg, var(--color-background-dark), var(--color-background-light));
-  color: #fff;
-  font-family: var(--font-main);
-  -webkit-font-smoothing: antialiased;
-  overflow: hidden; /* Предотвращаем прокрутку */
+   height: 100%;
+   margin: 0;
+   background: linear-gradient(180deg, var(--color-background-dark), var(--color-background-light));
+   color: #fff;
+   font-family: var(--font-main);
+   -webkit-font-smoothing: antialiased;
 }
 
 #container {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: flex-start; 
-  height: 100dvh; 
-  min-height: 100vh; 
-  padding: 18px;
+   display: flex;
+   flex-direction: column;
+   align-items: center;
+   justify-content: flex-start; 
+   height: 100dvh; 
+   padding: 18px;
 }
 
 /* ================== HUD и Кнопки ================== */
 #hud {
-  width: min(var(--max-game-w), 94vw);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 14px;
-  gap: var(--hud-gap);
-  flex-shrink: 0; 
+   width: min(var(--max-game-w), 94vw);
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   margin-bottom: 14px;
+   gap: var(--hud-gap);
+   flex-shrink: 0; 
 }
 
 #hud .left #title {
-  font-size: 24px;
-  color: var(--color-gold);
-  text-shadow: var(--neon-glow-gold);
+   font-size: 24px;
+   color: var(--color-gold);
+   text-shadow: var(--neon-glow-gold);
 }
 
 #hud .left #title .sub {
-  font-size: 12px;
-  color: var(--color-magenta);
-  margin-left: 8px;
-  text-shadow: var(--neon-glow-magenta);
+   font-size: 12px;
+   color: var(--color-magenta);
+   margin-left: 8px;
+   text-shadow: var(--neon-glow-magenta);
 }
 
 #hud .center {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  flex: 1;
-  justify-content: center;
-  min-width: 160px;
+   display: flex;
+   gap: 10px;
+   align-items: center;
+   flex: 1;
+   justify-content: center;
+   min-width: 160px;
 }
 
 .stat {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.04));
-  padding: 8px 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 242, 0, 0.08);
-  box-shadow: 0 14px 40px rgba(40, 20, 80, 0.1), 
-              inset 0 -6px 18px rgba(0, 0, 0, 0.5);
-  min-width: 78px;
-  text-align: center;
+   background: linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(0, 0, 0, 0.04));
+   padding: 8px 10px;
+   border-radius: 12px;
+   border: 1px solid rgba(255, 242, 0, 0.08);
+   box-shadow: 0 14px 40px rgba(40, 20, 80, 0.1), 
+                     inset 0 -6px 18px rgba(0, 0, 0, 0.5);
+   min-width: 78px;
+   text-align: center;
 }
 
 .stat .label {
-  font-size: 11px;
-  color: var(--color-text-light);
-  opacity: 0.85;
+   font-size: 11px;
+   color: var(--color-text-light);
+   opacity: 0.85;
 }
 
 .stat .value {
-  font-weight: 900;
-  font-size: 16px;
-  color: var(--color-gold);
+   font-weight: 900;
+   font-size: 16px;
+   color: var(--color-gold);
 }
 
 .right {
-  display: flex;
-  gap: 10px;
-  align-items: center;
+   display: flex;
+   gap: 10px;
+   align-items: center;
 }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  border-radius: 12px;
-  cursor: pointer;
-  font-weight: 900;
-  padding: 10px 14px;
-  font-size: 14px;
-  touch-action: manipulation;
-  color: var(--color-dark-text);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   background: none;
+   border: none;
+   border-radius: 12px;
+   cursor: pointer;
+   font-weight: 900;
+   padding: 10px 14px;
+   font-size: 14px;
+   touch-action: manipulation;
+   color: var(--color-dark-text);
+   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
 }
 
 .btn.icon {
-  width: 48px;
-  height: 48px;
-  padding: 6px;
-  border-radius: 14px;
-  display: inline-grid;
-  place-items: center;
-  background: none;
-  border: 2px solid rgba(255, 247, 64, 0.2);
-  box-shadow: 0 8px 30px rgba(255, 247, 64, 0.04), inset 0 0 6px rgba(255, 255, 255, 0.03);
-  transition: transform 0.12s, box-shadow 0.12s;
-  color: var(--color-gold);
+   width: 48px;
+   height: 48px;
+   padding: 6px;
+   border-radius: 14px;
+   display: inline-grid;
+   place-items: center;
+   background: none;
+   border: 2px solid rgba(255, 247, 64, 0.2);
+   box-shadow: var(--shadow-btn-gold), inset 0 0 6px var(--translucent-glass);
+   transition: transform 0.12s, box-shadow 0.12s;
+   color: var(--color-gold);
+   position: relative; 
 }
 
 #sound-toggle {
-  color: var(--color-magenta);
-  border: 2px solid rgba(255, 0, 255, 0.2);
-  box-shadow: 0 8px 30px rgba(255, 0, 255, 0.04), inset 0 0 6px rgba(255, 255, 255, 0.03);
+   color: var(--color-magenta);
+   border: 2px solid rgba(255, 0, 255, 0.2);
+   box-shadow: var(--shadow-btn-magenta), inset 0 0 6px var(--translucent-glass);
 }
 
 .btn.icon svg {
-  filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 4px currentColor);
+   filter: drop-shadow(0 0 8px currentColor) drop-shadow(0 0 4px currentColor);
 }
 
 .btn.icon:hover {
-  transform: scale(1.08);
-  box-shadow: 0 0px 5px var(--color-gold), inset 0 0 2px rgba(255, 247, 64, 0.45);
+   transform: scale(1.08);
+   box-shadow: 0 0px 5px var(--color-gold), inset 0 0 2px rgba(255, 247, 64, 0.45);
 }
 
+#sound-toggle:hover {
+   box-shadow: 0 0px 5px var(--color-magenta), inset 0 0 2px rgba(255, 0, 255, 0.2);
+}
 
 .btn.icon:active {
-  outline: 3px solid var(--color-gold);
-  outline-offset: 1px;
+   outline: 3px solid var(--color-gold);
+   outline-offset: 1px;
 }
 
 #sound-toggle:active {
-  outline: 3px solid var(--color-magenta);
-  outline-offset: 1px;
+   outline: 3px solid var(--color-magenta);
+   outline-offset: 1px;
 }
 
-/* ================== КОНТЕЙНЕР ИГРЫ (ПРЯМОУГОЛЬНЫЙ) ================== */
+/* ================== КОНТЕЙНЕР ИГРЫ ================== */
 #game-wrap {
-  width: min(var(--max-game-w), 94vw);
-  flex-grow: 1; 
-  display: flex;
-  align-items: center;
-  justify-content: center;
+   width: min(var(--max-game-w), 94vw);
+   height: auto; 
+   flex-grow: 1; 
+   display: flex;
+   flex-direction: column;
 }
 
 #game {
-  position: relative;
-  
-  /* Правила для адаптивности */
-  max-width: 100%; 
-  max-height: 100%; 
-  width: auto; 
-  height: auto; 
-  
-  /* ПРЯМОУГОЛЬНОЕ соотношение для клавиатуры */
-  aspect-ratio: 1/1.25; 
-  
-  background: 
-    linear-gradient(180deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.9)),
-    url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="rgba(255,255,255,0.03)"><filter id="n" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(#n)"/></svg>');
-  background-size: cover;
-  border-radius: 14px;
-  border: 3px solid rgba(255, 249, 139, 0.08);
-  box-shadow: 0 28px 100px rgba(0, 0, 0, 0.65), inset 0 0 28px rgba(255, 247, 64, 0.03);
-  overflow: hidden;
-  touch-action: none;
-  
-  /* Размещение сетки и клавиатуры */
-  display: flex;
-  flex-direction: column;
+   position: relative; 
+   flex: 1; 
+   display: flex;
+   flex-direction: column;
+   max-width: 100%; 
+   max-height: 100%; 
+   width: auto; 
+   height: auto; 
+   
+   background: 
+      linear-gradient(90deg, rgb(0, 0, 13),
+       rgb(0, 8, 14),
+       rgb(0, 0, 13)),
+      url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100" fill="rgba(255,255,255,0.00)"><filter id="n" x="0" y="0"><feTurbulence type="fractalNoise" baseFrequency="0.6" numOctaves="3" stitchTiles="stitch"/></filter><rect width="100" height="100" filter="url(#n)"/></svg>');
+   background-size: cover;
+   border-radius: 14px;
+   border: 3px solid rgba(93, 225, 255, 0.08);
+   box-shadow: 0 28px 100px rgba(0, 0, 0, 0.65), inset 0 0 28px rgba(255, 247, 64, 0.03);
+   overflow: hidden;
+   touch-action: none;
+   
+   display: flex;
+   flex-direction: column;
 }
+
+/* ================== НАЛОЖЕНИЕ / OVERLAY ================== */
+#start-overlay {
+      position: fixed; 
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.95);
+      backdrop-filter: blur(8px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.3s, visibility 0.3s;
+      z-index: 100; 
+}
+
+#start-overlay.visible {
+      opacity: 1;
+      visibility: visible;
+}
+
+#start-card {
+      padding: 30px 40px;
+      border-radius: 20px;
+      background: var(--color-background-panel);
+      border: 3px solid var(--color-gold);
+      box-shadow: var(--neon-glow-gold);
+      text-align: center;
+      max-width: 90vw;
+}
+
 
 /* ================== Сетка Судоку ================== */
 #sudoku-grid {
-    flex-grow: 1;
-    width: 100%;
-    /* Используем Grid для размещения 9x9 */
-    display: grid;
-    grid-template-columns: repeat(9, 1fr);
-    grid-template-rows: repeat(9, 1fr);
-    gap: 0; 
-    /* Добавляем внутренний отступ для оформления */
-    padding: var(--grid-gap); 
-    padding-bottom: 0; /* Убираем нижний отступ, чтобы прижать клавиатуру */
-    align-items: stretch;
-    justify-items: stretch;
+   flex-grow: 0; 
+   flex-shrink: 0; 
+   width: auto; 
+   height: auto; 
+   align-self: center; 
+   display: grid;
+   grid-template-columns: repeat(9, 1fr);
+   grid-template-rows: repeat(9, 1fr);
+   gap: 0; 
+   margin-top: 14px; 
+   padding-bottom: 0; 
+   align-items: stretch;
+   justify-items: stretch;
 }
 
 /* Базовый стиль ячеек */
 .sudoku-cell {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    font-weight: 700;
-    
-    border: 1px solid rgba(255, 255, 255, 0.08); 
-    box-shadow: 0 0 3px rgba(0, 255, 255, 0.05);
-
-    color: var(--color-magenta);
-    text-shadow: 0 0 5px var(--color-magenta);
-    padding: 0; 
-    position: relative;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-weight: 500;
+      background-color: rgba(27, 51, 70, 0.075);
+      border: 1px ridge rgba(0, 238, 255, 0.15); 
+      box-shadow: inset 0 0 10px rgb(0, 0, 0);
+      padding: 0; 
+      position: relative;
+      transition: background-color 0.1s;
+      z-index: 100;
+      cursor: pointer;
 }
 
 /* Стили для поля ввода */
 .sudoku-cell input {
-    width: 100%;
-    height: 100%;
-    text-align: center;
-    background: transparent;
-    border: none;
-    outline: none;
-    color: var(--color-cyan); 
-    font-family: var(--font-main);
-    font-weight: 700;
-    cursor: pointer;
-    text-shadow: 0 0 5px var(--color-cyan);
-    padding: 0;
-    margin: 0;
+      width: 100%;
+      height: 100%;
+      text-align: center;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--color-orange); 
+      font-family: var(--font-main);
+      font-weight: 400;
+      cursor: pointer;
+      z-index: 10050;
+      text-shadow: var(--neon-glow-orange);
+      padding: 0;
+      margin: 0;
+      caret-color: transparent; 
 }
+
+/* --- Стили Заметок (Желтые) --- */
+.sudoku-cell .notes {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      grid-template-rows: repeat(3, 1fr);
+      width: 100%;
+      height: 100%;
+      position: absolute;
+      inset: 0;
+      padding: 2px; 
+      pointer-events: none; 
+      opacity: 0.7;
+      border-radius: 10px;
+}
+
+.sudoku-cell .notes span {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.35em; 
+      color: var(--color-gold); 
+      font-weight: 1000;
+      text-shadow: 0 0 2px var(--color-gold);
+      pointer-events: none; 
+}
+/* --- Конец Стили Заметок --- */
+
 
 /* Фиксированные (предустановленные) значения */
 .sudoku-cell.fixed-value {
-    color: var(--color-magenta);
-    text-shadow: 0 0 5px var(--color-magenta);
+      color: var(--color-cyan); 
+      text-shadow: var(--neon-glow-cyan);
 }
-
-/* ----------------------------------------------------
-   --- Границы блоков 3x3 ---
-   ---------------------------------------------------- */
-.sudoku-cell[data-col="3"] { border-right: 3px solid var(--color-magenta); }
-.sudoku-cell[data-col="6"] { border-right: 3px solid var(--color-magenta); }
-.sudoku-cell[data-row="3"] { border-bottom: 3px solid var(--color-cyan); }
-.sudoku-cell[data-row="6"] { border-bottom: 3px solid var(--color-magenta); }
-.sudoku-cell[data-col="9"] { border-right: 1px solid rgba(255, 255, 255, 0.08); }
-.sudoku-cell[data-row="9"] { border-bottom: 1px solid rgba(255, 255, 255, 0.08); }
 
 /* Дополнительные стили подсветки */
 .sudoku-cell.highlight-target {
-    background-color: rgba(255, 255, 0, 0.15); 
-    box-shadow: 0 0 8px var(--color-gold), inset 0 0 8px var(--color-gold);
+      background-color: none; 
+      border: 2px solid var(--color-orange);
+      box-shadow: 0 0 20px var(--color-orange), inset 0 0 5px var(--color-orange);
 }
 .sudoku-cell.highlight-related {
-    background-color: rgba(0, 255, 255, 0.08); 
+      background-color: rgba(0, 255, 255, 0.08); 
 }
 .sudoku-cell.error {
-    background-color: rgba(255, 0, 0, 0.2); 
-    box-shadow: 0 0 8px #ff3333, inset 0 0 8px #ff3333;
+      background-color: rgba(255, 0, 0, 0.2); 
+      box-shadow: 0 0 8px #ff3333, inset 0 0 8px #ff3333;
 }
 
-/* =========================================================
-   === СТИЛИ ОВЕРЛЕЯ ===
-   ========================================================= */
-
-#start-overlay {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background: rgba(0, 0, 0, 0.7);
-    z-index: 10000;
-    pointer-events: none;
-    backdrop-filter: blur(2px);
-    visibility: hidden;
-    opacity: 0;
-    transition: opacity 0.3s, visibility 0.3s;
-}
-#start-overlay.visible {
-    visibility: visible;
-    opacity: 1;
-    pointer-events: auto;
-}
-#start-card {
-    border: 3px solid var(--color-magenta);
-    border-radius: 12px;
-    padding: 30px 40px;
-    text-align: center;
-    box-shadow: var(--neon-glow-magenta);
+.sudoku-cell.highlight-value {
+      background-color: var(--color-same-value-bg); 
+      box-shadow: 0 0 8px var(--color-same-value), inset 0 0 8px var(--color-same-value);
+      border-color: var(--color-same-value);
 }
 
-/* Стили для "Game Over" состояния */
-#start-overlay.gameover #start-card {
-    border-color: var(--color-gold);
-    box-shadow: 0 0 40px var(--color-gold), inset 0 0 10px var(--color-gold);
-}
-#start-overlay.gameover #start-title {
-    color: var(--color-gold);
-    text-shadow: 0 0 2px var(--color-gold);
-}
+/* ================== ВИРТУАЛЬНАЯ КЛАВИАТУРА СТИЛИ ================== */
 
-#start-card h2 {
-    font-size: 28px;
-    color: var(--color-magenta);
-    margin-top: 0;
-}
-#start-card p {
-    font-size: 16px;
-    color: var(--color-text-light);
-    margin-bottom: 0;
-    font-weight: 700;
-    animation: neon-pulse 1.5s infinite alternate;
-}
-
-@keyframes neon-pulse {
-    from { opacity: 0.8; text-shadow: none; }
-    to { opacity: 3; text-shadow: 0 0 4px var(--color-magenta); }
-}
-
-
-/* =========================================================
-   === ВИРТУАЛЬНАЯ КЛАВИАТУРА СТИЛИ ===
-   ========================================================= */
 
 #keyboard-wrap {
-    width: 100%; 
-    padding: var(--grid-gap);
-    padding-top: 10px; 
-    margin-top: auto; 
-    flex-shrink: 0;
+      width: 100%; 
+      align-self: center; 
+      padding-top: 10px; 
+      margin-top: 0;
+      
+      flex-shrink: 0;
+      display: flex; 
+      justify-content: center; 
 }
 
 #virtual-keyboard {
-    display: grid;
-    /* 10 колонок: 9 цифр + 1 кнопка "Стереть" */
-    grid-template-columns: repeat(10, 1fr); 
-    gap: 8px;
+      display: grid;
+      grid-template-columns: repeat(9, 1fr);
+      gap: 3px;
+      width: 90%;
 }
 
 .key-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    height: 50px;
-    font-family: var(--font-main);
-    font-size: 18px;
-    font-weight: 900;
-    color: var(--color-cyan);
-    
-    background: var(--color-background-panel);
-    border: 2px solid rgba(0, 255, 255, 0.15);
-    border-radius: 10px;
-    cursor: pointer;
-    
-    box-shadow: 0 0 10px rgba(0, 255, 255, 0.1), inset 0 0 5px rgba(0, 255, 255, 0.3);
-    transition: all 0.1s;
-    user-select: none; 
-    touch-action: manipulation; 
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 45px;
+      font-family: var(--font-main);
+      font-size: 1.3rem; 
+      font-weight: 900;
+      color: var(--color-gold); 
+      background: none;
+      border: 2px solid rgba(64, 233, 255, 0.5);
+      border-radius: 4px;
+      cursor: pointer;
+      text-shadow: 0 0 2px var(--color-gold);
+      box-shadow: var(--shadow-btn-gold), inset 0 0 6px var(--translucent-glass);
+      transition: all 0.1s;
+      user-select: none; 
+      touch-action: manipulation; 
+      position: relative; 
 }
 
+
+
 .key-btn:hover {
-    background-color: rgba(0, 255, 255, 0.1);
-    transform: translateY(-1px);
+      background-color: rgba(0, 213, 255, 0.1);
+      transform: translateY(-1px);
 }
 
 .key-btn:active {
-    box-shadow: 0 0 15px var(--color-cyan), inset 0 0 8px var(--color-cyan);
-    transform: scale(0.98);
-    background-color: rgba(0, 255, 255, 0.2);
+      box-shadow: 0 0 15px var(--color-cyan), 0 0 30px var(--color-cyan), inset 0 0 8px var(--color-cyan);
+      transform: scale(0.98);
+      background-color: rgba(0, 204, 255, 0.2);
 }
 
 .key-btn.special-key {
-    grid-column: 10 / 11; 
-    color: var(--color-magenta);
-    border-color: rgba(255, 0, 255, 0.15);
-    box-shadow: 0 0 10px rgba(255, 0, 255, 0.1), inset 0 0 5px rgba(255, 0, 255, 0.3);
+      color: var(--color-cyan); 
+ 
+      box-shadow: var(--shadow-btn-magenta), inset 0 0 10px var(--translucent-glass);
 }
 
 .key-btn.special-key:active {
-    box-shadow: 0 0 15px var(--color-magenta), inset 0 0 8px var(--color-magenta);
-    background-color: rgba(255, 0, 255, 0.2);
+      box-shadow: 0 0 10px var(--color-cyan), 0 0 20px var(--color-cyan), inset 0 0 8px var(--color-cyan);
+      background-color: rgba(1, 104, 130, 0.2);
 }
 
 .key-btn.special-key svg {
-    width: 20px;
-    height: 20px;
-    filter: drop-shadow(0 0 4px currentColor);
+      width: 20px;
+      height: 20px;
+      filter: drop-shadow(0 0 4px currentColor);
+}
+
+/* --- Стили счетчика подсказок --- */
+.key-counter {
+      position: absolute;
+      bottom: 4px; 
+      right: 4px; 
+      font-size: 12px; 
+      font-weight: 900;
+      color: var(--color-gold);
+      text-shadow: 0 0 7px rgba(255, 221, 1, 0.427);
+      margin: 2px 2px;
+      line-height: 1;
+     
+}
+
+/* --- Стили активного режима заметок --- */
+#notes-toggle.active {
+      transform: scale(0.98);
+      background-color: rgba(255, 238, 0, 0.15);
+      color: var(--color-gold);
+      border-color: rgba(255, 238, 0, 0.45);
 }
 
 /* Медиа-запрос для мобильных устройств */
 @media (max-width: 480px) {
-    /* Адаптируем HUD для узких экранов */
-    #hud { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 20px; }
-    #hud .left { display: flex; justify-content: center; width: 100%; margin-bottom: 10px; }
-    #hud .center { justify-content: space-between; gap: 8px; flex-wrap: nowrap; width: 100%; margin-bottom: 10px; }
-    #hud .center .stat { flex-grow: 1; }
-    .stat { min-width: unset; padding: 10px 12px; border-radius: 10px; }
-    .right { justify-content: space-between; width: 100%; flex-direction: row; }
-    .btn.icon { width: 52px; height: 52px; }
-    
-    /* Уменьшаем клавиатуру, чтобы поместиться */
-    #keyboard-wrap {
-        padding: 8px;
-        padding-top: 8px;
-    }
-    #virtual-keyboard {
-        gap: 5px;
-    }
-    .key-btn {
-        height: 44px;
-        font-size: 15px;
-    }
+      /* Адаптируем HUD для узких экранов */
+      #hud { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 20px; }
+      #hud .left { display: flex; justify-content: center; width: 100%; margin-bottom: 10px; }
+      #hud .center { justify-content: space-between; gap: 8px; flex-wrap: nowrap; width: 100%; margin-bottom: 10px; }
+      #hud .center .stat { flex-grow: 1; }
+
+      /* Уменьшаем размеры элементов .stat */
+      .stat { 
+            min-width: unset; 
+            padding: 8px 10px; 
+            border-radius: 8px; 
+      }
+      .stat .label {
+            font-size: 10px; 
+      }
+      .stat .value {
+            font-size: 14px; 
+      }
+
+      .right { justify-content: space-between; width: 100%; flex-direction: row; }
+      /* Уменьшенные кнопки HUD */
+      .btn.icon { width: 44px; height: 44px; padding: 4px; border-radius: 12px; } 
+      
+      /* Уменьшаем клавиатуру, чтобы поместиться */
+      #keyboard-wrap {
+            padding: 8px;
+            padding-top: 8px;
+      }
+      #virtual-keyboard {
+            gap: 5px;
+            
+      }
+      .key-btn {
+            height: 30px;
+            border-radius: 0;
+            font-size: 15px;
+      }
+      #key-undo, #key-erase {
+            font-size: 12px;
+      }
 }
