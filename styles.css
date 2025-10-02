@@ -384,9 +384,10 @@ html, body {
       font-size: 1.3rem; 
       font-weight: 900;
       color: var(--color-gold); 
-      background: none;
+      background: rgba(1, 81, 92, 0.1);
       border: 2px solid rgba(64, 233, 255, 0.5);
       border-radius: 4px;
+      
       cursor: pointer;
       text-shadow: 0 0 2px var(--color-gold);
       box-shadow: var(--shadow-btn-gold), inset 0 0 6px var(--translucent-glass);
@@ -399,24 +400,28 @@ html, body {
 
 
 .key-btn:hover {
-      background-color: rgba(0, 213, 255, 0.1);
+      background-color: rgba(0, 213, 255, 0.2);
       transform: translateY(-1px);
 }
 
 .key-btn:active {
-      box-shadow: 0 0 15px var(--color-cyan), 0 0 30px var(--color-cyan), inset 0 0 8px var(--color-cyan);
+      box-shadow: 0 0 5px  rgba(0, 213, 255, 0.977), 0 0 50px rgba(0, 213, 255, 0.377), inset 0 0 8px rgba(0, 213, 255, 0.177);
       transform: scale(0.98);
       background-color: rgba(0, 204, 255, 0.2);
 }
 
 .key-btn.special-key {
       color: var(--color-cyan); 
- 
+      background: none;
       box-shadow: var(--shadow-btn-magenta), inset 0 0 10px var(--translucent-glass);
 }
 
+.key-btn.special-key:hover {
+      background: rgba(0, 213, 255, 0.1);
+}
+
 .key-btn.special-key:active {
-      box-shadow: 0 0 10px var(--color-cyan), 0 0 20px var(--color-cyan), inset 0 0 8px var(--color-cyan);
+      box-shadow: 0 0 5px  rgba(0, 213, 255, 0.6), 0 0 30px rgba(0, 213, 255, 0.377), inset 0 0 8px rgba(0, 213, 255, 0.177);
       background-color: rgba(1, 104, 130, 0.2);
 }
 
