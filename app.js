@@ -242,9 +242,15 @@ function renderBoard() {
                     handleFocus({ target: cell }); 
                 }); 
             } else {
-                // Ячейка, которую может заполнить пользователь
                 const input = document.createElement("input");
-                input.type = 'text';
+                
+               
+                input.type = 'text'; 
+                input.readOnly = true; 
+                input.setAttribute('inputmode', 'none'); 
+                
+                // ==========================================
+                
                 input.maxLength = 1;
                 input.pattern = '[1-9]';
                 input.value = value === 0 ? '' : value; 
