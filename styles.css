@@ -353,7 +353,10 @@ html, body {
       box-shadow: 0 0 8px var(--color-same-value), inset 0 0 8px var(--color-same-value);
       border-color: var(--color-same-value);
 }
-
+.sudoku-cell.user-entered {
+      color: var(--color-orange);
+      text-shadow: var(--neon-glow-orange);
+}
 /* ================== ВИРТУАЛЬНАЯ КЛАВИАТУРА СТИЛИ ================== */
 
 

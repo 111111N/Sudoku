@@ -41,8 +41,10 @@ const startScore = startOverlay.querySelector('#start-score');
 
 // === Sudoku State ===
 let currentBoard = []; 
+let initialBoard = []; 
 let solutionBoard = []; 
-let errors = 0;
+let currentDisplayedErrors = 0; 
+let totalErrors = 0; // Общее количество совершенных ошибок (НЕ сбрасывается при Undo)
 let difficulty = 'Medium'; 
 let gameStartTime = 0;
 let timerInterval = null;
@@ -52,6 +54,7 @@ let soundOn = (localStorage.getItem("snake_sound") || "1") === "1";
 let hintsRemaining = 3; 
 let isNotesMode = false; 
 let notesBoard = []; 
+let hintCells = new Set(); // Отслеживание ячеек, заполненных подсказкой
 
 // History state (Undo)
 let history = []; 
@@ -63,17 +66,17 @@ const MAX_HISTORY = 50;
 // =========================================================
 
 function saveState() {
-    // Сохраняем глубокую копию текущего состояния до изменения
     const currentBoardCopy = currentBoard.map(row => [...row]);
-    // Сохраняем глубокую копию заметок (Set'ы)
     const notesBoardCopy = notesBoard.map(row => row.map(set => new Set(set)));
 
     history.push({ 
         board: currentBoardCopy, 
-        notes: notesBoardCopy 
+        notes: notesBoardCopy,
+        totalErrors: totalErrors, // Сохраняется для статистики в истории
+        hintsRemaining: hintsRemaining, 
+        hintCells: new Set(hintCells)
     });
 
-    // Ограничиваем историю
     if (history.length > MAX_HISTORY) {
         history.shift(); 
     }
@@ -84,19 +87,23 @@ function undo() {
         return;
     }
     
-    // Удаляем последнее (текущее) состояние, которое было сохранено перед последним изменением
+    // 1. Удаляем последнее состояние
     history.pop(); 
     
-    // Берем предыдущее состояние
+    // 2. Берем новое последнее состояние
     const previousState = history[history.length - 1]; 
     
-    // Восстанавливаем доски
+    // Восстанавливаем доски и состояние
     currentBoard = previousState.board.map(row => [...row]);
     notesBoard = previousState.notes.map(row => row.map(set => new Set(set)));
+    // totalErrors НЕ ВОССТАНАВЛИВАЕТСЯ, чтобы счетчик не уменьшался
+    hintsRemaining = previousState.hintsRemaining; 
+    hintCells = new Set(previousState.hintCells); 
     
     // Перерисовываем и обновляем состояние
     renderBoard();
     updateErrors();
+    updateHintsUI();
     
     // Сбрасываем выделение
     selectedCell = null;
@@ -203,7 +210,6 @@ function renderBoard() {
     gridEl.style.gridTemplateColumns = `repeat(${SIZE}, 1fr)`;
     gridEl.style.gridTemplateRows = `repeat(${SIZE}, 1fr)`;
 
-    // Используем rgba для границ блоков
     const blockBorderColor = "rgba(0, 251, 255, 0.67)"; 
     
     for (let r = 0; r < SIZE; r++) {
@@ -213,29 +219,35 @@ function renderBoard() {
             cell.dataset.row = r + 1; 
             cell.dataset.col = c + 1;
             
-            // === ЛОГИКА ГРАНИЦ 3x3 ===
             const isColBoundary = (c + 1) % 3 === 0 && c + 1 !== 9; 
             const isRowBoundary = (r + 1) % 3 === 0 && r + 1 !== 9; 
             if (isColBoundary) { cell.style.borderRight = `2px solid ${blockBorderColor}`; }
             if (isRowBoundary) { cell.style.borderBottom = `2px solid ${blockBorderColor}`; }
-            // ===============================================
 
             const value = currentBoard[r][c];
             
-            if (value !== 0) {
-                cell.textContent = value;
+            if (initialBoard[r][c] !== 0) {
+                // Исходно заданные (неизменяемые)
+                cell.textContent = initialBoard[r][c];
                 cell.classList.add('fixed-value');
-                // Добавление обработчика клика для фиксированных ячеек
                 cell.addEventListener('click', () => { 
                     handleFocus({ target: cell }); 
                 }); 
-
+            } else if (hintCells.has(`${r},${c}`)) { 
+                // Заполнены с помощью подсказки - теперь они неотменяемые, как фиксированные, 
+                // но с цветом, как у введенных пользователем
+                cell.textContent = value;
+                cell.classList.add('user-entered'); 
+                cell.addEventListener('click', () => { 
+                    handleFocus({ target: cell }); 
+                }); 
             } else {
+                // Ячейка, которую может заполнить пользователь
                 const input = document.createElement("input");
                 input.type = 'text';
                 input.maxLength = 1;
                 input.pattern = '[1-9]';
-                input.value = '';
+                input.value = value === 0 ? '' : value; 
                 input.dataset.r = r; 
                 input.dataset.c = c;
                 input.classList.add('input-value');
@@ -255,11 +267,17 @@ function renderBoard() {
                 
                 updateNotesDisplay(r, c, notesContainer);
                 
-                input.addEventListener('input', handleInput);
+                input.addEventListener('input', (e) => {
+                    const prevVal = currentBoard[r][c];
+                    handleInput(e); 
+                    const newVal = currentBoard[r][c];
+                    if(prevVal !== newVal) {
+                        saveState();
+                    }
+                });
                 input.addEventListener('focus', handleFocus);
                 input.addEventListener('blur', handleBlur);
                 
-                // Для ячейки с input клик на div фокусирует input.
                 cell.addEventListener('click', () => { 
                     input.focus();
                 }); 
@@ -339,16 +357,66 @@ function highlightSameValues(value) {
     const num = parseInt(value);
     if (isNaN(num) || num === 0) return;
 
-    // Используем data-row/data-col для правильного сопоставления с currentBoard
     gridEl.querySelectorAll('.sudoku-cell').forEach((cell) => {
-        const r = parseInt(cell.dataset.row) - 1; // 0-based index
-        const c = parseInt(cell.dataset.col) - 1; // 0-based index
+        const r = parseInt(cell.dataset.row) - 1; 
+        const c = parseInt(cell.dataset.col) - 1; 
         
-        // Проверяем текущее значение доски
         if (currentBoard[r][c] === num) {
             cell.classList.add('highlight-value');
         }
     });
+}
+
+// =========================================================
+// === Notes Auto-Cleanup Logic ===
+// =========================================================
+
+/**
+ * Удаляет указанное число из заметок во всех ячейках того же ряда, столбца и блока.
+ * @param {number} r - Индекс ряда, где было введено число.
+ * @param {number} c - Индекс столбца, где было введено число.
+ * @param {number} num - Число для удаления из заметок.
+ */
+function autoCleanupNotes(r, c, num) {
+    if (num === 0) return; // Нечего удалять, если число стерли
+
+    const boxRowStart = Math.floor(r / 3) * 3;
+    const boxColStart = Math.floor(c / 3) * 3;
+    let notesChanged = false;
+
+    for (let i = 0; i < SIZE; i++) {
+        // Проверяем ряд
+        if (notesBoard[r][i].delete(num)) {
+            updateNotesDisplay(r, i);
+            notesChanged = true;
+        }
+        // Проверяем столбец
+        if (notesBoard[i][c].delete(num)) {
+            updateNotesDisplay(i, c);
+            notesChanged = true;
+        }
+
+        // Проверяем блок 3x3
+        const boxR = boxRowStart + Math.floor(i / 3);
+        const boxC = boxColStart + (i % 3);
+        
+        if (notesBoard[boxR][boxC].delete(num)) {
+            updateNotesDisplay(boxR, boxC);
+            notesChanged = true;
+        }
+    }
+    
+    // При вводе числа также очищаем заметки в самой ячейке
+    if (notesBoard[r][c].size > 0) {
+        notesBoard[r][c].clear();
+        updateNotesDisplay(r, c);
+        notesChanged = true;
+    }
+
+    // Если заметки были изменены, сохраняем состояние
+    if (notesChanged) {
+        saveState();
+    }
 }
 
 // =========================================================
@@ -358,76 +426,118 @@ function highlightSameValues(value) {
 function applyKeyValueToSelectedCell(key) {
     if (!selectedCell) return;
     
-    const isFixed = selectedCell.classList.contains('fixed-value');
-    if (isFixed) {
-        // Защита: нельзя менять фиксированные ячейки
+    // Подсказанные ячейки теперь тоже защищены
+    const isProtected = selectedCell.classList.contains('fixed-value') || selectedCell.classList.contains('user-entered');
+    if (isProtected) {
         return; 
     }
     
-    // Сохраняем состояние ПЕРЕД изменением доски
-    saveState(); 
-
     const input = selectedCell.querySelector('input');
-    // Ячейки, которые не являются fixed, всегда имеют input, но проверка на всякий случай
     if (!input) {
-        history.pop(); 
         return;
     }
 
     const r = parseInt(input.dataset.r);
     const c = parseInt(input.dataset.c);
+    let stateChanged = false;
     
+    const preChangeValue = currentBoard[r][c];
+
     if (isNotesMode) {
         // --- РЕЖИМ ЗАМЕТОК ---
         if (/[1-9]/.test(key) && key.length === 1) {
             const num = parseInt(key);
             const notes = notesBoard[r][c];
+            const currentVal = currentBoard[r][c];
 
-            if (currentBoard[r][c] !== 0) {
-                // Если ячейка заполнена, очищаем значение перед добавлением заметки
+            if (currentVal !== 0) {
                 input.value = '';
                 currentBoard[r][c] = 0;
+                stateChanged = true;
             }
             
-            // Переключаем заметку
-            if (notes.has(num)) {
+            const hadNote = notes.has(num);
+            if (hadNote) {
                 notes.delete(num);
+                stateChanged = true;
             } else {
                 notes.add(num);
+                stateChanged = true;
             }
+            
             updateNotesDisplay(r, c);
             
         } else if (key === 'Delete' || key === 'Backspace' || key === '0') { 
-            // Кнопка "Стереть" / "Delete" в режиме заметок стирает все заметки
-            notesBoard[r][c].clear();
-            updateNotesDisplay(r, c);
-        } else {
-            history.pop(); 
-            return;
-        }
+            if (notesBoard[r][c].size > 0) {
+                notesBoard[r][c].clear();
+                updateNotesDisplay(r, c);
+                stateChanged = true;
+            }
+        } 
         
     } else {
         // --- РЕЖИМ ВВОДА ЗНАЧЕНИЯ ---
+        let newVal = '';
         if (key === 'Delete' || key === 'Backspace' || key === '0') { 
-            input.value = ''; 
+            newVal = ''; 
         } else if (/[1-9]/.test(key) && key.length === 1) {
-            input.value = key; 
-            // При вводе значения очищаем все заметки
+            newVal = key; 
+        } 
+        
+        if (input.value !== newVal) {
+            input.value = newVal; 
+            stateChanged = true;
+        }
+        
+        // В режиме ввода значения всегда очищаем заметки в текущей ячейке
+        if (stateChanged && notesBoard[r][c].size > 0) {
             notesBoard[r][c].clear();
             updateNotesDisplay(r, c);
-        } else {
-            history.pop(); 
-            return;
         }
-
-        handleInput({ target: input });
+        
+        if (stateChanged) {
+             handleInput({ target: input });
+        }
         
         const val = input.value;
         const num = val === '' ? 0 : parseInt(val);
         highlightSameValues(num); 
+
+        // ЛОГИКА НАКОПИТЕЛЬНЫХ ОШИБОК
+        if (stateChanged) {
+            const currentVal = currentBoard[r][c];
+            const solutionVal = solutionBoard[r][c];
+            
+            if (currentVal !== 0 && currentVal !== solutionVal) {
+                if (currentVal !== preChangeValue || preChangeValue === 0) {
+                    totalErrors++;
+                }
+            }
+        }
+        
+        // --- НОВАЯ ЛОГИКА АВТОМАТИЧЕСКОЙ ОЧИСТКИ ---
+        // Если введено новое число (не стерто)
+        if (stateChanged && num !== 0) {
+             autoCleanupNotes(r, c, num);
+        } else if (stateChanged && preChangeValue !== 0 && num === 0) {
+             // Если число стерто, мы не удаляем заметки, но нужно сохранить состояние
+             saveState(); 
+        }
     }
     
-    // input.focus() вызывается неявно через клик или явно через keydown
+    // Сохраняем состояние ТОЛЬКО если произошли изменения И мы не в режиме ввода числа
+    // (потому что autoCleanupNotes уже вызывает saveState в этом случае)
+    if (stateChanged && !isNotesMode) {
+        const num = input.value === '' ? 0 : parseInt(input.value);
+        if (num === 0) {
+             saveState();
+        }
+        // Если num !== 0, saveState() вызовет autoCleanupNotes
+    } else if (stateChanged && isNotesMode) {
+        saveState();
+    }
+    
+    updateErrors();
 }
 
 function handleInput(event) {
@@ -441,6 +551,7 @@ function handleInput(event) {
     const num = val === '' ? 0 : parseInt(val);
     currentBoard[r][c] = num;
     
+    // В режиме ввода значения заметки в ячейке должны быть очищены
     if (num !== 0) {
         notesBoard[r][c].clear();
         updateNotesDisplay(r, c);
@@ -456,7 +567,6 @@ function handleInput(event) {
 }
 
 function handleFocus(event) {
-    // Находим ближайший div.sudoku-cell
     const cell = event.target.closest('.sudoku-cell');
     if (!cell) return;
     
@@ -466,12 +576,9 @@ function handleFocus(event) {
     const input = cell.querySelector('input');
     let valueToHighlight = 0;
     
-    // Ключевая логика для подсветки
-    if (cell.classList.contains('fixed-value')) {
-        // Если это фиксированная ячейка, берем значение из текста
+    if (cell.classList.contains('fixed-value') || cell.classList.contains('user-entered')) {
         valueToHighlight = parseInt(cell.textContent);
     } else if (input) {
-        // Если это ячейка ввода, берем значение из input
         valueToHighlight = parseInt(input.value || '0');
     }
     
@@ -483,7 +590,6 @@ function handleFocus(event) {
 function handleBlur(event) {
     clearHighlights();
     clearValueHighlights(); 
-    // selectedCell = null; 
 }
 
 function highlightRelatedCells(cell) {
@@ -535,8 +641,8 @@ function updateErrors() {
     for (let r = 0; r < SIZE; r++) {
         for (let c = 0; c < SIZE; c++) {
             const val = currentBoard[r][c];
-            if (val !== 0) {
-                // Если значение не 0 и не совпадает с решением, это ошибка 
+            // Проверяем только ячейки, которые были заполнены (не исходные)
+            if (initialBoard[r][c] === 0 && val !== 0) { 
                 if (val !== solutionBoard[r][c]) {
                     currentErrors++;
                     const cellEl = gridEl.querySelector(`[data-row="${r+1}"][data-col="${c+1}"]`);
@@ -546,8 +652,8 @@ function updateErrors() {
         }
     }
     
-    errors = currentErrors;
-    scoreEl.textContent = errors; 
+    currentDisplayedErrors = currentErrors;
+    scoreEl.textContent = totalErrors; 
 }
 
 function checkWinCondition() {
@@ -555,14 +661,14 @@ function checkWinCondition() {
     
     if (allFilled) {
         updateErrors(); 
-        if (errors === 0) {
+        if (currentDisplayedErrors === 0) { 
             gameOver(true); 
         } 
     }
 }
 
 function updateHUD(timeElapsed = 0) {
-    scoreEl.textContent = errors;
+    scoreEl.textContent = totalErrors;
     
     const timeFormatted = formatTime(timeElapsed);
     bestEl.textContent = timeFormatted; 
@@ -587,21 +693,25 @@ function runTimer() {
 function initGame() {
     // 1. Generate new puzzle
     solutionBoard = generateSolvedBoard();
-    currentBoard = generatePuzzle(solutionBoard, difficulty); 
+    const puzzle = generatePuzzle(solutionBoard, difficulty);
+    currentBoard = puzzle.map(row => [...row]);
+    initialBoard = puzzle.map(row => [...row]); 
     
     // 2. Reset state
-    errors = 0;
+    currentDisplayedErrors = 0;
+    totalErrors = 0; 
     selectedCell = null; 
     hintsRemaining = 3; 
     isNotesMode = false; 
     notesBoard = createEmptyNotesBoard(); 
     history = []; 
+    hintCells = new Set(); 
+    
+    // Сохраняем начальное состояние
+    saveState();
     
     // 3. Render
     renderBoard();
-    
-    // Сохраняем начальное состояние сразу после рендеринга
-    saveState();
     
     // 4. Update HUD and start timer
     updateHUD(0);
@@ -646,19 +756,19 @@ function showStartOverlay(isGameOver = false, win = false, finalTime = 0, isNewB
             startOverlay.classList.add('gameover'); 
             startTitle.style.color = 'var(--color-gold)';
             startScore.textContent = `Время: ${formatTime(finalTime)}`;
-            startMessage.textContent = isNewBest ? 'НОВЫЙ ЛУЧШИЙ РЕЗУЛЬТАТ! Нажмите Enter/клик, чтобы начать заново.' : 'Отлично! Нажмите Enter/клик, чтобы начать заново.';
+            startMessage.textContent = isNewBest ? 'НОВЫЙ ЛУЧШИЙ РЕЗУЛЬТАТ! Нажмите Enter/клик/любую клавишу, чтобы начать заново.' : 'Отлично! Нажмите Enter/клик/любую клавишу, чтобы начать заново.';
         } else {
             startTitle.textContent = "ИГРА ЗАВЕРШЕНА";
             startOverlay.classList.add('gameover');
             startTitle.style.color = 'var(--color-gold)';
-            startScore.textContent = `Ошибок: ${errors}`;
-            startMessage.textContent = 'Нажмите Enter/клик, чтобы начать заново.';
+            startScore.textContent = `Ошибок: ${totalErrors}`;
+            startMessage.textContent = 'Нажмите любую клавишу, чтобы начать заново.';
         }
     } else {
         startTitle.textContent = "SUDOKU — CyberPunk";
         startTitle.style.color = 'var(--color-magenta)';
         startScore.style.display = 'none';
-        startMessage.textContent = isMobile ? 'Нажмите, чтобы начать' : 'Нажмите Enter, чтобы начать';
+        startMessage.textContent = 'Нажмите любую клавишу, чтобы начать';
         startOverlay.classList.remove('gameover');
     }
 }
@@ -688,87 +798,92 @@ function updateHintsUI() {
     }
 }
 
-/**
- * Открывает правильную цифру в выбранной ячейке (приоритет) или в первой пустой ячейке.
- */
 function handleHint() {
     if (hintsRemaining <= 0 || !gridEl) return;
     
-    saveState(); 
+    let emptyCells = [];
+    for (let r = 0; r < SIZE; r++) {
+        for (let c = 0; c < SIZE; c++) {
+            // Ячейка должна быть заполняемой пользователем И пустой
+            if (initialBoard[r][c] === 0 && currentBoard[r][c] === 0) {
+                emptyCells.push([r, c]);
+            }
+        }
+    }
 
-    let targetCell = null;
+    if (emptyCells.length === 0) {
+        // Если все ячейки заполнены, подсказку использовать нельзя
+        return; 
+    }
+
     let targetR, targetC;
+    let targetIndex = -1;
     
-    // Приоритет 1: Выбранная **пустая** ячейка
+    // Приоритет 1: Выбранная пустая ячейка
     if (selectedCell) {
-        const inputEl = selectedCell.querySelector('input');
-        if (inputEl) { // Проверяем, что это не фиксированная ячейка
-            const r = parseInt(inputEl.dataset.r);
-            const c = parseInt(inputEl.dataset.c);
-            
-            if (currentBoard[r][c] === 0) {
-                targetR = r;
-                targetC = c;
-                targetCell = selectedCell;
-            }
-        }
+        const r = parseInt(selectedCell.dataset.row) - 1;
+        const c = parseInt(selectedCell.dataset.col) - 1;
+        
+        // Проверяем, находится ли выбранная ячейка в списке пустых
+        targetIndex = emptyCells.findIndex(cell => cell[0] === r && cell[1] === c);
     }
     
-    // Приоритет 2: Первая пустая ячейка
-    if (!targetCell) {
-        for (let r = 0; r < SIZE; r++) {
-            for (let c = 0; c < SIZE; c++) {
-                if (currentBoard[r][c] === 0) {
-                    targetR = r;
-                    targetC = c;
-                    targetCell = gridEl.querySelector(`[data-row="${r+1}"][data-col="${c+1}"]`);
-                    break;
-                }
-            }
-            if (targetCell) break;
-        }
-    }
-    
-    if (targetCell) {
-        // 2. Применяем правильное значение
-        const solutionValue = solutionBoard[targetR][targetC];
-        
-        // Удаляем input и notes, если они есть
-        const inputEl = targetCell.querySelector('input');
-        const notesEl = targetCell.querySelector('.notes');
-        if (notesEl) notesEl.remove();
-        if (inputEl) inputEl.remove();
-        
-        // Добавляем статичное значение
-        targetCell.textContent = solutionValue;
-        currentBoard[targetR][targetC] = solutionValue; 
-        
-        // Делаем ячейку фиксированной (пользователь не сможет ее изменить)
-        targetCell.classList.add('fixed-value');
-        targetCell.classList.remove('error'); 
-        
-        // Очищаем заметки 
-        notesBoard[targetR][targetC].clear(); 
-
-        // Декремент подсказок и обновляем UI
-        hintsRemaining--;
-        updateHintsUI();
-        
-        // Проверяем состояние игры
-        updateErrors();
-        checkWinCondition();
-        
-        // Сбрасываем все выделения, чтобы не оставлять старый фокус
-        clearHighlights();
-        clearValueHighlights();
-        
-        // Эмулируем фокус на новой фиксированной ячейке для подсветки одинаковых значений
-        handleFocus({ target: targetCell }); 
-
+    // Выбираем либо выбранную, либо случайную
+    if (targetIndex !== -1) {
+        [targetR, targetC] = emptyCells[targetIndex];
     } else {
-        // Если не удалось применить подсказку (вся доска заполнена), удаляем несостоявшееся сохранение
-        history.pop();
+        // Выбираем случайную пустую ячейку
+        const randomIndex = Math.floor(Math.random() * emptyCells.length);
+        [targetR, targetC] = emptyCells[randomIndex];
     }
+    
+    const targetCell = gridEl.querySelector(`[data-row="${targetR+1}"][data-col="${targetC+1}"]`);
+
+    // ----------------------------------------------------
+    // --- Application of Hint (cannot be undone) ---
+    // ----------------------------------------------------
+    
+    const solutionValue = solutionBoard[targetR][targetC];
+    
+    // 1. DOM/State cleanup
+    const inputEl = targetCell.querySelector('input');
+    const notesEl = targetCell.querySelector('.notes');
+    if (notesEl) notesEl.remove();
+    if (inputEl) inputEl.remove();
+    
+    // 2. Apply value
+    targetCell.textContent = solutionValue;
+    currentBoard[targetR][targetC] = solutionValue; 
+    
+    // 3. Mark cell
+    hintCells.add(`${targetR},${targetC}`);
+    targetCell.classList.add('user-entered'); 
+    targetCell.classList.remove('error'); 
+    
+    // 4. Final steps
+    targetCell.addEventListener('click', () => { 
+        handleFocus({ target: targetCell }); 
+    }); 
+
+    notesBoard[targetR][targetC].clear(); 
+
+    hintsRemaining--;
+    updateHintsUI();
+    
+    // Очистка заметок после применения подсказки
+    autoCleanupNotes(targetR, targetC, solutionValue);
+    
+    updateErrors();
+    checkWinCondition();
+    
+    clearHighlights();
+    clearValueHighlights();
+    
+    handleFocus({ target: targetCell }); 
+
+    // Делаем подсказку необратимой, сбросив историю и сохранив новое состояние
+    history = [];
+    saveState(); 
 }
 
 // =========================================================
@@ -791,14 +906,11 @@ function handleNotesToggle() {
     isNotesMode = !isNotesMode;
     updateNotesUI();
     
-    // Фокусируем на выбранной ячейке, чтобы обновить ее состояние
     if (selectedCell) {
         const input = selectedCell.querySelector('input');
         if (input) {
-             // Снова вызываем фокус для input, чтобы обновить выделение
             input.focus(); 
         } else {
-            // Если это фиксированная ячейка, просто обновляем выделение
             handleFocus({ target: selectedCell });
         }
     }
@@ -811,17 +923,15 @@ const isMobile = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
 
 // === 1. Обработка нажатий на ФИЗИЧЕСКОЙ клавиатуре ===
 document.addEventListener("keydown", (e) => {
-    if (e.key === 'F5') {
+    // Любое нажатие для старта
+    if (startOverlay.classList.contains('visible') && e.key !== 'F5' && e.key !== 'F12') {
         e.preventDefault();
-        return; 
+        startGame(); // Запускает игру по ЛЮБОЙ клавише
+        return;
     }
     
-    if (e.key === 'Enter') {
-        if (startOverlay.classList.contains('visible')) {
-            e.preventDefault();
-            startGame();
-            return;
-        }
+    if (e.key === 'F5' || e.key === 'F12') {
+        return; 
     }
     
     // Toggle Notes Mode
@@ -869,7 +979,13 @@ if (virtualKeyboardEl) {
     });
 }
 
-startOverlay.addEventListener("click", () => {
+// Любой клик/тач для старта
+document.addEventListener("click", (e) => {
+    // 1. Исключаем кнопки, которые должны работать, даже если оверлей видим
+    if (e.target.closest('#newgame') || e.target.closest('#sound-toggle') || e.target.closest('#virtual-keyboard')) {
+        return;
+    }
+    
     if (startOverlay.classList.contains('visible')) {
         startGame();
     }
