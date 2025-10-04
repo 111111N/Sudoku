@@ -3,7 +3,7 @@
    
    /* Цветовая палитра */
    --color-gold: #ffeb3b; 
-   --color-magenta: #ff00ff; 
+   --color-magenta: #00ffff; /* no magenta this mode */ 
    --color-cyan: #00ffff; 
    --color-green: #e5ff72;
    --color-orange: #ffcc00;
@@ -30,7 +30,7 @@
    --neon-glow-orange: 0 0 2px var(--color-orange), 0 0 3px var(--color-orange), 0 0 50px var(--color-orange);
    /* Тени для кнопок */
    --shadow-btn-gold: 0 8px 30px rgba(255, 247, 64, 0.04);
-   --shadow-btn-magenta: 0 8px 30px rgba(255, 0, 255, 0.04);
+   --shadow-btn-magenta: 0 8px 30px rgba(0, 221, 255, 0.04);
 
    /* Шрифты и отступы */
    --font-main: "Orbitron", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
@@ -81,6 +81,15 @@ html, body {
    margin-left: 8px;
    text-shadow: var(--neon-glow-magenta);
 }
+
+/* НОВЫЙ СТИЛЬ: Включает Flexbox для CENTER и RIGHT на десктопе */
+.hud-stats-buttons {
+    display: flex;
+    align-items: center;
+    gap: var(--hud-gap);
+    flex: 1; /* Позволяет обертке занимать все доступное место */
+}
+
 
 #hud .center {
    display: flex;
@@ -153,7 +162,7 @@ html, body {
 
 #sound-toggle {
    color: var(--color-magenta);
-   border: 2px solid rgba(255, 0, 255, 0.2);
+   border: 2px solid rgba(0, 255, 251, 0.2);
    box-shadow: var(--shadow-btn-magenta), inset 0 0 6px var(--translucent-glass);
 }
 
@@ -167,7 +176,7 @@ html, body {
 }
 
 #sound-toggle:hover {
-   box-shadow: 0 0px 5px var(--color-magenta), inset 0 0 2px rgba(255, 0, 255, 0.2);
+   box-shadow: 0 0px 5px var(--color-magenta), inset 0 0 2px rgba(0, 221, 255, 0.2);
 }
 
 .btn.icon:active {
@@ -461,14 +470,34 @@ html, body {
       /* Адаптируем HUD для узких экранов */
       #hud { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 20px; }
       #hud .left { display: flex; justify-content: center; width: 100%; margin-bottom: 10px; }
-      #hud .center { justify-content: space-between; gap: 8px; flex-wrap: nowrap; width: 100%; margin-bottom: 10px; }
+      
+      /* НОВЫЙ СТИЛЬ: Настройка обертки для CENTER и RIGHT в одну строку */
+      .hud-stats-buttons {
+            margin-top: 10px;
+          display: flex;
+          flex-direction: row; /* ГЛАВНОЕ ИЗМЕНЕНИЕ: В ряд на мобильных */
+          justify-content: space-between;
+          width: 100%; 
+          gap: 8px;
+          align-items: center;
+      }
+
+      /* КОРРЕКТИРОВКА: Убираем конфликтующие стили с .center */
+      #hud .center { 
+          justify-content: space-between;
+          gap: 8px;
+          flex-wrap: nowrap; 
+          width: auto; /* Убираем 100% ширину */
+          margin-bottom: 0; /* Убираем вертикальный отступ */
+          flex-grow: 1; /* Позволяем занимать доступное место */
+      }
       #hud .center .stat { flex-grow: 1; }
 
       /* Уменьшаем размеры элементов .stat */
       .stat { 
             min-width: unset; 
-            padding: 8px 10px; 
-            border-radius: 8px; 
+            padding: 3px 3px; 
+            border-radius: 8px;
       }
       .stat .label {
             font-size: 10px; 
@@ -477,17 +506,23 @@ html, body {
             font-size: 14px; 
       }
 
-      .right { justify-content: space-between; width: 100%; flex-direction: row; }
+      /* КОРРЕКТИРОВКА: Убираем конфликтующие стили с .right */
+      .right { 
+          justify-content: flex-end; /* Выравниваем кнопки вправо */
+          width: auto; /* Убираем 100% ширину */
+          flex-direction: row;
+          flex-shrink: 0; /* Не даем кнопкам сжиматься */
+      }
       /* Уменьшенные кнопки HUD */
       .btn.icon { width: 44px; height: 44px; padding: 4px; border-radius: 12px; } 
       
       /* Уменьшаем клавиатуру, чтобы поместиться */
       #keyboard-wrap {
-            padding: 8px;
-            padding-top: 8px;
+            padding: 4px;
+            margin-top: 50px;
       }
       #virtual-keyboard {
-            gap: 5px;
+            gap: 2px;
             
       }
       .key-btn {
