@@ -1,43 +1,43 @@
 :root {
    --max-game-w: 560px;
    
-   /* Цветовая палитра */
+   /* Color Palette */
    --color-gold: #ffeb3b; 
-   --color-magenta: #00ffff; /* no magenta this mode */ 
    --color-cyan: #00ffff; 
    --color-green: #e5ff72;
    --color-orange: #ffcc00;
    --color-text-light: #e0e0e0;
    --color-dark-text: #050608; 
 
-   /* Цвет для подсветки одинаковых значений */
+   /* Color for highlighting same values */
    --color-same-value: #9933ff; 
    --color-same-value-bg: rgba(153, 51, 255, 0.2); 
 
-   /* Фоновые цвета */
+   /* Background Colors */
    --color-background-dark: #0c0b0e;
    --color-background-light: #111216;
    --color-background-panel: #17151a;
    
-   /* Прозрачные элементы */
+   /* Translucent elements */
    --translucent-glass: rgba(255,255,255,0.03);
 
-   /* Неоновые эффекты */
-   --neon-glow-magenta: 0 0 10px var(--color-magenta), 0 0 15px var(--color-magenta), 0 0 50px var(--color-magenta);
+   /* Neon Effects */
+   --neon-glow-cyan-alt: 0 0 10px var(--color-cyan), 0 0 15px var(--color-cyan), 0 0 50px var(--color-cyan);
    --neon-glow-gold: 0 0 2px var(--color-gold), 0 0 3px var(--color-gold), 0 0 3px var(--color-gold);
    --neon-glow-cyan: 0 0 2px var(--color-cyan), 0 0 50px rgba(0, 255, 255, 0.7);
    --neon-glow-green: 0 0 2px var(--color-green), 0 0 3px var(--color-green);
    --neon-glow-orange: 0 0 2px var(--color-orange), 0 0 3px var(--color-orange), 0 0 50px var(--color-orange);
-   /* Тени для кнопок */
+   
+   /* Button Shadows */
    --shadow-btn-gold: 0 8px 30px rgba(255, 247, 64, 0.04);
-   --shadow-btn-magenta: 0 8px 30px rgba(0, 221, 255, 0.04);
+   --shadow-btn-cyan: 0 8px 30px rgba(0, 221, 255, 0.04); /* Изменено с magenta на cyan */
 
-   /* Шрифты и отступы */
+   /* Fonts and Spacing */
    --font-main: "Orbitron", system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
    --hud-gap: 12px;
 }
 
-/* ================== Базовые стили ================== */
+/* ================== Base Styles ================== */
 *, *::before, *::after { box-sizing: border-box; }
 
 html, body {
@@ -58,7 +58,7 @@ html, body {
    padding: 18px;
 }
 
-/* ================== HUD и Кнопки ================== */
+/* ================== HUD and Buttons ================== */
 #hud {
    width: min(var(--max-game-w), 94vw);
    display: flex;
@@ -77,17 +77,17 @@ html, body {
 
 #hud .left #title .sub {
    font-size: 12px;
-   color: var(--color-magenta);
+   color: var(--color-cyan); 
    margin-left: 8px;
-   text-shadow: var(--neon-glow-magenta);
+   text-shadow: var(--neon-glow-cyan-alt);
 }
 
-/* НОВЫЙ СТИЛЬ: Включает Flexbox для CENTER и RIGHT на десктопе */
+
 .hud-stats-buttons {
     display: flex;
     align-items: center;
     gap: var(--hud-gap);
-    flex: 1; /* Позволяет обертке занимать все доступное место */
+    flex: 1; 
 }
 
 
@@ -161,9 +161,9 @@ html, body {
 }
 
 #sound-toggle {
-   color: var(--color-magenta);
+   color: var(--color-cyan);
    border: 2px solid rgba(0, 255, 251, 0.2);
-   box-shadow: var(--shadow-btn-magenta), inset 0 0 6px var(--translucent-glass);
+   box-shadow: var(--shadow-btn-cyan), inset 0 0 6px var(--translucent-glass);
 }
 
 .btn.icon svg {
@@ -176,7 +176,7 @@ html, body {
 }
 
 #sound-toggle:hover {
-   box-shadow: 0 0px 5px var(--color-magenta), inset 0 0 2px rgba(0, 221, 255, 0.2);
+   box-shadow: 0 0px 5px var(--color-cyan), inset 0 0 2px rgba(0, 221, 255, 0.2);
 }
 
 .btn.icon:active {
@@ -185,11 +185,11 @@ html, body {
 }
 
 #sound-toggle:active {
-   outline: 3px solid var(--color-magenta);
+   outline: 3px solid var(--color-cyan);
    outline-offset: 1px;
 }
 
-/* ================== КОНТЕЙНЕР ИГРЫ ================== */
+/* ================== GAME CONTAINER ================== */
 #game-wrap {
    width: min(var(--max-game-w), 94vw);
    height: auto; 
@@ -224,7 +224,7 @@ html, body {
    flex-direction: column;
 }
 
-/* ================== НАЛОЖЕНИЕ / OVERLAY ================== */
+/* ================== OVERLAY ================== */
 #start-overlay {
       position: fixed; 
       inset: 0;
@@ -257,7 +257,7 @@ html, body {
 }
 
 
-/* ================== Сетка Судоку ================== */
+/* ================== Sudoku Grid ================== */
 #sudoku-grid {
    flex-grow: 0; 
    flex-shrink: 0; 
@@ -274,7 +274,7 @@ html, body {
    justify-items: stretch;
 }
 
-/* Базовый стиль ячеек */
+/* Base cell style */
 .sudoku-cell {
       display: flex;
       justify-content: center;
@@ -290,7 +290,7 @@ html, body {
       cursor: pointer;
 }
 
-/* Стили для поля ввода */
+/* Input styles */
 .sudoku-cell input {
       width: 100%;
       height: 100%;
@@ -309,7 +309,7 @@ html, body {
       caret-color: transparent; 
 }
 
-/* --- Стили Заметок (Желтые) --- */
+/* --- Notes Styles (Yellow) --- */
 .sudoku-cell .notes {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -334,16 +334,14 @@ html, body {
       text-shadow: 0 0 2px var(--color-gold);
       pointer-events: none; 
 }
-/* --- Конец Стили Заметок --- */
+/* --- End Notes Styles --- */
 
 
-/* Фиксированные (предустановленные) значения */
 .sudoku-cell.fixed-value {
       color: var(--color-cyan); 
       text-shadow: var(--neon-glow-cyan);
 }
 
-/* Дополнительные стили подсветки */
 .sudoku-cell.highlight-target {
       background-color: none; 
       border: 2px solid var(--color-orange);
@@ -366,7 +364,7 @@ html, body {
       color: var(--color-orange);
       text-shadow: var(--neon-glow-orange);
 }
-/* ================== ВИРТУАЛЬНАЯ КЛАВИАТУРА СТИЛИ ================== */
+/* ================== VIRTUAL KEYBOARD STYLES ================== */
 
 
 #keyboard-wrap {
@@ -425,7 +423,7 @@ html, body {
 .key-btn.special-key {
       color: var(--color-cyan); 
       background: none;
-      box-shadow: var(--shadow-btn-magenta), inset 0 0 10px var(--translucent-glass);
+      box-shadow: var(--shadow-btn-cyan), inset 0 0 10px var(--translucent-glass); /* Изменено с magenta на cyan */
 }
 
 .key-btn.special-key:hover {
@@ -433,7 +431,7 @@ html, body {
 }
 
 .key-btn.special-key:active {
-      box-shadow: 0 0 5px  rgba(0, 213, 255, 0.6), 0 0 30px rgba(0, 213, 255, 0.377), inset 0 0 8px rgba(0, 213, 255, 0.177);
+      box-shadow: 0 0 5px  rgba(0, 255, 251, 0.7), 0 0 30px rgba(0, 213, 255, 0.377), inset 0 0 8px rgba(0, 213, 255, 0.177);
       background-color: rgba(1, 104, 130, 0.2);
 }
 
@@ -443,7 +441,7 @@ html, body {
       filter: drop-shadow(0 0 4px currentColor);
 }
 
-/* --- Стили счетчика подсказок --- */
+/* --- Hint counter styles --- */
 .key-counter {
       position: absolute;
       bottom: 4px; 
@@ -457,7 +455,7 @@ html, body {
      
 }
 
-/* --- Стили активного режима заметок --- */
+/* --- Notes active mode styles --- */
 #notes-toggle.active {
       transform: scale(0.98);
       background-color: rgba(255, 238, 0, 0.15);
@@ -465,70 +463,62 @@ html, body {
       border-color: rgba(255, 238, 0, 0.45);
 }
 
-/* Медиа-запрос для мобильных устройств */
+/* Media query for mobile devices */
 @media (max-width: 480px) {
-      /* Адаптируем HUD для узких экранов */
+      /* Adapt HUD for narrow screens */
       #hud { flex-direction: column; align-items: stretch; gap: 10px; margin-bottom: 20px; }
       #hud .left { display: flex; justify-content: center; width: 100%; margin-bottom: 10px; }
       
-      /* НОВЫЙ СТИЛЬ: Настройка обертки для CENTER и RIGHT в одну строку */
       .hud-stats-buttons {
             margin-top: 10px;
           display: flex;
-          flex-direction: row; /* ГЛАВНОЕ ИЗМЕНЕНИЕ: В ряд на мобильных */
+          flex-direction: row;
           justify-content: space-between;
           width: 100%; 
           gap: 8px;
           align-items: center;
       }
 
-      /* КОРРЕКТИРОВКА: Убираем конфликтующие стили с .center */
       #hud .center { 
           justify-content: space-between;
           gap: 8px;
           flex-wrap: nowrap; 
-          width: auto; /* Убираем 100% ширину */
-          margin-bottom: 0; /* Убираем вертикальный отступ */
-          flex-grow: 1; /* Позволяем занимать доступное место */
+          width: auto;
+          margin-bottom: 0;
+          flex-grow: 1;
       }
       #hud .center .stat { flex-grow: 1; }
 
-      /* Уменьшаем размеры элементов .stat */
-      .stat { 
-            min-width: unset; 
-            padding: 3px 3px; 
-            border-radius: 8px;
-      }
-      .stat .label {
-            font-size: 10px; 
-      }
-      .stat .value {
-            font-size: 14px; 
+      .right { 
+          justify-content: flex-end; 
+          width: auto; 
+          flex-direction: row;
+          flex-shrink: 0;
       }
 
-      /* КОРРЕКТИРОВКА: Убираем конфликтующие стили с .right */
-      .right { 
-          justify-content: flex-end; /* Выравниваем кнопки вправо */
-          width: auto; /* Убираем 100% ширину */
-          flex-direction: row;
-          flex-shrink: 0; /* Не даем кнопкам сжиматься */
-      }
-      /* Уменьшенные кнопки HUD */
       .btn.icon { width: 44px; height: 44px; padding: 4px; border-radius: 12px; } 
-      
-      /* Уменьшаем клавиатуру, чтобы поместиться */
+      #sudoku-grid{
+            padding-left: 5%;
+            padding-right: 5%;
+      }
       #keyboard-wrap {
             padding: 4px;
-            margin-top: 50px;
+            margin-top: 25px;
       }
       #virtual-keyboard {
-            gap: 2px;
+            gap: 10px;
             
       }
       .key-btn {
             height: 30px;
-            border-radius: 0;
-            font-size: 15px;
+            border: 1px solid #00ffff00;
+            font-size: 22px;
+            padding: 3px 4px;
+            background: none;
+      } 
+      .key-btn.special-key {
+            border: 2px solid var(--color-cyan);
+            border-radius: 10px
       }
       #key-undo, #key-erase {
             font-size: 12px;
