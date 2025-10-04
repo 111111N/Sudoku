@@ -446,7 +446,7 @@ html, body {
       position: absolute;
       bottom: 4px; 
       right: 4px; 
-      font-size: 12px; 
+      font-size: 15px; 
       font-weight: 900;
       color: var(--color-gold);
       text-shadow: 0 0 7px rgba(255, 221, 1, 0.427);
@@ -513,7 +513,8 @@ html, body {
             height: 30px;
             border: 1px solid #00ffff00;
             font-size: 22px;
-            padding: 3px 4px;
+            padding: 0px 2px;
+            padding-bottom: 2px;
             background: none;
       } 
       .key-btn.special-key {
@@ -522,5 +523,8 @@ html, body {
       }
       #key-undo, #key-erase {
             font-size: 12px;
+      }
+      .key-counter{
+            font-size: 10px;
       }
 }
