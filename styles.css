@@ -23,7 +23,7 @@
 
    /* Neon Effects */
    --neon-glow-cyan-alt: 0 0 10px var(--color-cyan), 0 0 15px var(--color-cyan), 0 0 50px var(--color-cyan);
-   --neon-glow-gold: 0 0 2px var(--color-gold), 0 0 3px var(--color-gold), 0 0 3px var(--color-gold);
+   --neon-glow-gold: 0 0 10px var(--color-gold), 0 0 15px var(--color-gold), 0 0 50px var(--color-gold);
    --neon-glow-cyan: 0 0 2px var(--color-cyan), 0 0 50px rgba(0, 255, 255, 0.7);
    --neon-glow-green: 0 0 2px var(--color-green), 0 0 3px var(--color-green);
    --neon-glow-orange: 0 0 2px var(--color-orange), 0 0 3px var(--color-orange), 0 0 50px var(--color-orange);
@@ -282,7 +282,7 @@ html, body {
       font-weight: 500;
       background-color: rgba(27, 51, 70, 0.075);
       border: 1px ridge rgba(0, 238, 255, 0.15); 
-      box-shadow: inset 0 0 10px rgb(0, 0, 0);
+      box-shadow: inset 0 0 10px rgb(0, 0, 0), 0 0 30px rgba(0, 255, 255, 0.033);
       padding: 0; 
       position: relative;
       transition: background-color 0.1s;
